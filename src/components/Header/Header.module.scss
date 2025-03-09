@@ -1,0 +1,20 @@
+@use 'src/index' as global;
+
+.root {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: global.$header-height;
+  background: #3a3c41;
+  color: #a2a2a3;
+  padding: global.$default-v-padding global.$default-h-padding;
+
+  & > div {
+    display: flex;
+    align-items: center;
+  }
+
+  .logo {
+    font-size: 24px;
+  }
+}

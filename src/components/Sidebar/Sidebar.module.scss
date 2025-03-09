@@ -1,0 +1,13 @@
+@use 'src/index' as global;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  flex-basis: 300px;
+  min-width: 300px;
+  padding: global.$default-v-padding 0;
+
+  & > ul {
+    overflow: auto;
+  }
+}

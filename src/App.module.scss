@@ -1,0 +1,14 @@
+@use 'src/index' as global;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+
+  .content {
+    display: flex;
+    gap: 16px;
+    height: calc(100vh - global.$header-height);
+    padding: 0 global.$default-h-padding;
+  }
+}

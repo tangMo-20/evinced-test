@@ -1,0 +1,8 @@
+@use 'src/index' as global;
+
+.root {
+  display: flex;
+  flex-basis: calc(100% - 300px);
+  padding: global.$default-v-padding 0;
+  overflow: auto;
+}
