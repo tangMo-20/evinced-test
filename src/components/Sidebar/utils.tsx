@@ -1,3 +1,4 @@
+import { Button } from "@mui/material";
 import { metaFieldName } from "../../screens/ScanResults/utils";
 import { NodeTree } from "../../types";
 import {
@@ -5,20 +6,29 @@ import {
   TreeItemKeyboardEvent,
   TreeItemMouseEvent,
 } from "./types";
-import { TreeItem } from "@mui/x-tree-view";
+import { TreeItem2 } from "@mui/x-tree-view";
 
 export const filterTree = (tree: NodeTree, filter: string): NodeTree | null => {
   let hasMatch = false;
 
   const filteredNodes = Object.entries(tree).reduce<NodeTree>(
     (acc, [key, children]) => {
-      const filteredChildren = filterTree(children as NodeTree, filter);
+      const childrenNode = children as NodeTree;
+      const filteredChildren = filterTree(childrenNode, filter);
+      const nodeHasMatch = key.toLowerCase().includes(filter.toLowerCase());
 
-      if (
-        key.toLowerCase().includes(filter.toLowerCase()) ||
-        filteredChildren
-      ) {
-        acc[key] = (filteredChildren ?? children) as NodeTree;
+      if (nodeHasMatch || filteredChildren) {
+        const currentNode = { ...(filteredChildren ?? childrenNode) };
+
+        if (childrenNode[metaFieldName]) {
+          Object.defineProperty(currentNode, metaFieldName, {
+            enumerable: false,
+            configurable: true,
+            value: childrenNode[metaFieldName],
+          });
+        }
+
+        acc[key] = currentNode;
         hasMatch = true;
       }
 
@@ -49,50 +59,78 @@ const getItemLabel = ({
   return `${key} (${count}) ${percentDisplayValue}`;
 };
 
-// Required to add virtualization here as if there would be a lot of nodes, UI might become unresponsive
+export const defaultNodesCountToShow = 20;
+
 export const renderTree = ({
   tree,
   handleClick,
   handleKeyDown,
   parentId = "root",
+  nodsCount = defaultNodesCountToShow,
+  increeceNodesCount,
 }: RenderTreeParams) => {
-  return Object.entries(tree).map(([key, children]) => {
-    const { dataAccessId, count, percent } =
+  const entries = Object.entries(tree).slice(0, nodsCount);
+  const loadMoreSlots = { content: () => <Button fullWidth>Load More</Button> };
+
+  const handleKeyboardLoadMore = (e: TreeItemKeyboardEvent) => {
+    if (e.key === "Enter") {
+      increeceNodesCount?.();
+    }
+  };
+
+  const items = entries.map(([key, children]) => {
+    const itemKey = `${parentId}-${key}`;
+    const loadMoreId = `${itemKey}-load-more`;
+    const { id, dataAccessIds, count, percent } =
       (children as NodeTree)[metaFieldName] || {};
-    const label = getItemLabel({
-      key,
-      count,
-      percent,
-    });
+    const label = getItemLabel({ key, count, percent });
 
     const handleItemClick = (e: TreeItemMouseEvent) => {
-      if (dataAccessId) {
-        handleClick(e, dataAccessId);
+      const excludeTags = ["svg", "path"];
+      const target = (e.target as any).nodeName;
+
+      e.stopPropagation();
+
+      if (dataAccessIds && id && !excludeTags.includes(target)) {
+        handleClick(e, dataAccessIds, id);
       }
     };
 
     const handleItemKeyDown = (e: TreeItemKeyboardEvent) => {
-      if (dataAccessId) {
-        handleKeyDown(e, dataAccessId);
+      e.stopPropagation();
+
+      if (dataAccessIds && id) {
+        handleKeyDown(e, dataAccessIds, id);
       }
     };
 
     return (
-      <TreeItem
-        key={`${parentId}-${key}`}
-        itemId={dataAccessId ?? `${parentId}-${key}`}
+      <TreeItem2
+        key={itemKey}
+        itemId={id ?? itemKey}
         label={label}
         onClick={handleItemClick}
         onKeyDown={handleItemKeyDown}
       >
-        {children &&
-          renderTree({
-            tree: children as NodeTree,
-            handleClick,
-            handleKeyDown,
-            parentId: `${parentId}-${key}`,
-          })}
-      </TreeItem>
+        {renderTree({
+          tree: children as NodeTree,
+          handleClick,
+          handleKeyDown,
+          parentId: itemKey,
+          nodsCount,
+          increeceNodesCount,
+        })}
+        {Object.keys(children).length > nodsCount && (
+          <TreeItem2
+            itemId={loadMoreId}
+            slots={loadMoreSlots}
+            onClick={increeceNodesCount}
+            onKeyDown={handleKeyboardLoadMore}
+          />
+        )}
+      </TreeItem2>
     );
   });
+
+  return items;
 };

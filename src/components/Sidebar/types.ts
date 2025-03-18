@@ -7,7 +7,17 @@ export type TreeItemKeyboardEvent = React.KeyboardEvent<HTMLLIElement> &
 
 export type RenderTreeParams = {
   tree: NodeTree;
-  handleClick: (e: TreeItemMouseEvent, dataAccessId?: string) => void;
-  handleKeyDown: (e: TreeItemKeyboardEvent, dataAccessId?: string) => void;
+  handleClick: (
+    e: TreeItemMouseEvent,
+    dataAccessIds: string[],
+    id: string
+  ) => void;
+  handleKeyDown: (
+    e: TreeItemKeyboardEvent,
+    dataAccessIds: string[],
+    id: string
+  ) => void;
+  nodsCount: number;
+  increeceNodesCount: () => void;
   parentId?: string;
 };

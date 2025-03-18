@@ -11,10 +11,9 @@ export type ScanResultItem = {
   selector: string;
 };
 
-// dataAccessId is optional for intermediate nodes
-// as they don't have any associated data and are used only for display
 export type NodeMeta = {
-  dataAccessId?: string;
+  id: string;
+  dataAccessIds: string[];
   count: number;
   percent: number;
 };

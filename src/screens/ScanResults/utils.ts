@@ -5,7 +5,7 @@ import {
   ScanResultResponse,
 } from "../../types";
 
-const generateRandomString = (length: number) => {
+export const generateRandomString = (length: number) => {
   const chars =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let result = "";
@@ -54,6 +54,30 @@ export const mockedData: ScanResultResponse = {
   "https://www.ynet.co.il/dating/singles": generateMockIssues(),
   "https://www.ynet2.co.il/articles/0,7340,L-5778984,00.html":
     generateMockIssues(),
+  "https://www.ynet.co.il/layer-1": [
+    {
+      type: "1",
+      severity: "Critical",
+      component: generateRandomString(8),
+      selector: "1",
+    },
+  ],
+  "https://www.ynet.co.il/layer-1/layer-2": [
+    {
+      type: "2",
+      severity: "High",
+      component: generateRandomString(8),
+      selector: "2",
+    },
+  ],
+  "https://www.ynet.co.il/layer-1/layer-2/layer-3": [
+    {
+      type: "3",
+      severity: "Medium",
+      component: generateRandomString(8),
+      selector: "3",
+    },
+  ],
 };
 
 export const getHeavyMockedData = () => {
@@ -62,9 +86,8 @@ export const getHeavyMockedData = () => {
   // You can specify the required number of nodes in the loop for testing tree-building performance
   // Building a tree of 10000+ nodes takes ~50-60ms in my testing
   for (let i = 0; i < 100; i++) {
-    data[
-      `https://www.ynet.co.il/dating/${Math.random() < 0.5 ? "singles" : "couples"}/test-${i}`
-    ] = generateMockIssues();
+    data[`https://www.ynet.co.il/dating/singles/test-${i}`] =
+      generateMockIssues();
   }
 
   return data;
@@ -96,6 +119,7 @@ export const parseResponseIntoTree = (
   );
   const issuesCountMap = getIssuesCountMap(entries);
   const aggregatedIssuesCount = new Map<string, number>();
+  const dataKeys = new Map<string, string[]>();
 
   for (const [key, count] of issuesCountMap) {
     const url = new URL(key);
@@ -108,6 +132,12 @@ export const parseResponseIntoTree = (
         path,
         (aggregatedIssuesCount.get(path) || 0) + count
       );
+
+      if (!dataKeys.has(path)) {
+        dataKeys.set(path, []);
+      }
+
+      dataKeys.get(path)?.push(key);
     });
   }
 
@@ -130,8 +160,8 @@ export const parseResponseIntoTree = (
         totalIssuesCount > 0 ? (count / totalIssuesCount) * 100 : 0;
 
       const metadata: NodeMeta = {
-        dataAccessId:
-          `${url.protocol}//${path}` === currentKey ? currentKey : undefined,
+        id: `${url.protocol}//${path}`,
+        dataAccessIds: dataKeys.get(path) ?? [],
         count,
         percent,
       };
